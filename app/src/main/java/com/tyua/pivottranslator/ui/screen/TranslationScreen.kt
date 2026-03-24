@@ -1,22 +1,14 @@
 package com.tyua.pivottranslator.ui.screen
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -25,15 +17,14 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -63,14 +54,12 @@ private val supportedLanguages = listOf(
 fun TranslationScreen(
     viewModel: TranslationViewModel = viewModel()
 ) {
-    // ── StateFlow 관찰 ──
     val uiState by viewModel.uiState.collectAsState()
     val sourceText by viewModel.sourceText.collectAsState()
     val targetLanguage by viewModel.targetLanguage.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Error 상태일 때 Snackbar 표시
     LaunchedEffect(uiState) {
         if (uiState is TranslationUiState.Error) {
             snackbarHostState.showSnackbar(
@@ -101,7 +90,7 @@ fun TranslationScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ── 원문 입력 필드 ──
+            // ── 원문 입력 ──
             OutlinedTextField(
                 value = sourceText,
                 onValueChange = viewModel::updateSourceText,
@@ -109,33 +98,28 @@ fun TranslationScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp),
-                maxLines = 10
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // ── 도착 언어 드롭다운 ──
-            LanguageDropdown(
-                selectedLanguage = targetLanguage,
-                onLanguageSelected = viewModel::updateTargetLanguage
+                maxLines = 10,
+                enabled = uiState is TranslationUiState.Idle || uiState is TranslationUiState.Error
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ── 번역 실행 버튼 ──
-            Button(
-                onClick = viewModel::translate,
-                enabled = sourceText.isNotBlank() && uiState !is TranslationUiState.Loading,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("번역하기")
+            // ── 1단계 버튼: 영어로 번역 ──
+            if (uiState is TranslationUiState.Idle || uiState is TranslationUiState.Error) {
+                Button(
+                    onClick = viewModel::translateToEnglish,
+                    enabled = sourceText.isNotBlank(),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("영어로 번역하기")
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             // ── 상태별 UI ──
             when (val state = uiState) {
-                is TranslationUiState.Idle -> { /* 대기 — 아무것도 표시하지 않음 */ }
+                is TranslationUiState.Idle -> { /* 대기 */ }
 
                 is TranslationUiState.Loading -> {
                     Box(
@@ -148,17 +132,26 @@ fun TranslationScreen(
                     }
                 }
 
+                is TranslationUiState.Editing -> {
+                    EditingSection(
+                        initialEnglish = state.englishText,
+                        targetLanguage = targetLanguage,
+                        onLanguageSelected = viewModel::updateTargetLanguage,
+                        onTranslate = viewModel::translateToTarget,
+                        onBack = viewModel::resetState
+                    )
+                }
+
                 is TranslationUiState.Success -> {
-                    SuccessResultCard(
-                        rawEnglish = state.rawEnglish,
-                        refinedEnglish = state.refinedEnglish,
+                    SuccessSection(
+                        editedEnglish = state.editedEnglish,
                         finalTranslation = state.finalTranslation,
-                        targetLanguage = targetLanguage
+                        targetLanguage = targetLanguage,
+                        onNewTranslation = viewModel::resetState
                     )
                 }
 
                 is TranslationUiState.Error -> {
-                    // Snackbar와 함께 인라인 에러 메시지도 표시
                     Card(
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.errorContainer
@@ -184,57 +177,90 @@ fun TranslationScreen(
 // 하위 컴포저블
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-/** 도착 언어 선택 드롭다운 */
-@OptIn(ExperimentalMaterial3Api::class)
+/** Editing 상태 — 영어 직역 결과를 사용자가 확인/수정 후 최종 번역 요청 */
 @Composable
-private fun LanguageDropdown(
-    selectedLanguage: String,
-    onLanguageSelected: (String) -> Unit
+@OptIn(ExperimentalMaterial3Api::class)
+private fun EditingSection(
+    initialEnglish: String,
+    targetLanguage: String,
+    onLanguageSelected: (String) -> Unit,
+    onTranslate: (String) -> Unit,
+    onBack: () -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var editedEnglish by rememberSaveable(initialEnglish) { mutableStateOf(initialEnglish) }
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it }
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        ),
+        modifier = Modifier.fillMaxWidth()
     ) {
-        OutlinedTextField(
-            value = selectedLanguage,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("도착 언어") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            supportedLanguages.forEach { language ->
-                DropdownMenuItem(
-                    text = { Text(language) },
-                    onClick = {
-                        onLanguageSelected(language)
-                        expanded = false
-                    }
-                )
-            }
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "1단계: 영어 번역 결과",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "아래 영어 텍스트를 확인하고 필요하면 수정하세요.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onTertiaryContainer
+            )
         }
+    }
+
+    Spacer(modifier = Modifier.height(12.dp))
+
+    OutlinedTextField(
+        value = editedEnglish,
+        onValueChange = { editedEnglish = it },
+        label = { Text("영어 텍스트 (수정 가능)") },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(150.dp),
+        maxLines = 10
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // ── 번역할 언어 선택 (Editing 단계에서 선택) ──
+    LanguageDropdown(
+        selectedLanguage = targetLanguage,
+        onLanguageSelected = onLanguageSelected
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // 최종 번역 버튼
+    Button(
+        onClick = { onTranslate(editedEnglish) },
+        enabled = editedEnglish.isNotBlank(),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text("${targetLanguage}(으)로 번역하기")
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    // 처음으로 돌아가기
+    OutlinedButton(
+        onClick = onBack,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text("처음으로")
     }
 }
 
-/** 번역 성공 결과 카드 — 최종 번역 + 중간 과정 접기/펴기 */
+/** Success 상태 — 최종 번역 결과 표시 */
 @Composable
-private fun SuccessResultCard(
-    rawEnglish: String,
-    refinedEnglish: String,
+private fun SuccessSection(
+    editedEnglish: String,
     finalTranslation: String,
-    targetLanguage: String
+    targetLanguage: String,
+    onNewTranslation: () -> Unit
 ) {
-    var showDetails by rememberSaveable { mutableStateOf(false) }
-
-    // ── 최종 번역 결과 카드 ──
+    // 최종 번역 결과 카드
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer
@@ -258,52 +284,7 @@ private fun SuccessResultCard(
 
     Spacer(modifier = Modifier.height(12.dp))
 
-    // ── 중간 과정 접기/펴기 토글 ──
-    TextButton(
-        onClick = { showDetails = !showDetails },
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(if (showDetails) "중간 과정 접기" else "중간 과정 보기")
-            Spacer(modifier = Modifier.width(4.dp))
-            Icon(
-                imageVector = if (showDetails) Icons.Default.KeyboardArrowUp
-                else Icons.Default.KeyboardArrowDown,
-                contentDescription = null
-            )
-        }
-    }
-
-    AnimatedVisibility(
-        visible = showDetails,
-        enter = expandVertically(),
-        exit = shrinkVertically()
-    ) {
-        Column {
-            // 1단계: 영어 직역
-            StepCard(
-                stepLabel = "1단계",
-                title = "영어 직역",
-                content = rawEnglish
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            // 2단계: 다듬어진 영어
-            StepCard(
-                stepLabel = "2단계",
-                title = "다듬어진 영어",
-                content = refinedEnglish
-            )
-        }
-    }
-}
-
-/** 중간 과정 단계별 카드 */
-@Composable
-private fun StepCard(
-    stepLabel: String,
-    title: String,
-    content: String
-) {
+    // 사용된 영어 텍스트 참고 카드
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -312,16 +293,66 @@ private fun StepCard(
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
-                text = "$stepLabel: $title",
+                text = "사용된 영어 텍스트",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = content,
+                text = editedEnglish,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // 새 번역 시작 버튼
+    OutlinedButton(
+        onClick = onNewTranslation,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text("새 번역하기")
+    }
+}
+
+/** 번역할 언어 선택 드롭다운 */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LanguageDropdown(
+    selectedLanguage: String,
+    onLanguageSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it }
+    ) {
+        OutlinedTextField(
+            value = selectedLanguage,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("번역할 언어") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            supportedLanguages.forEach { language ->
+                DropdownMenuItem(
+                    text = { Text(language) },
+                    onClick = {
+                        onLanguageSelected(language)
+                        expanded = false
+                    }
+                )
+            }
         }
     }
 }
