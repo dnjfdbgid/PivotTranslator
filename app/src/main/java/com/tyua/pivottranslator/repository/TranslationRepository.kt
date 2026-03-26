@@ -11,7 +11,8 @@ import com.tyua.pivottranslator.translator.GoogleTranslator
 class TranslationRepository {
 
     /**
-     * 1단계: 원문 → 영어 직역 (DeepL)
+     * 1단계: 원문 → 영어 직역
+     * DeepL HTTP 429(Too Many Requests) 에러로 인해 구글 번역으로 대체
      */
     suspend fun translateToEnglish(sourceText: String): String =
 //        DeepLTranslator.translate(sourceText, "영어")
