@@ -1,9 +1,12 @@
 package com.tyua.pivottranslator.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.tyua.pivottranslator.network.RetrofitClient
+import com.tyua.pivottranslator.preferences.PreferencesManager
 import com.tyua.pivottranslator.repository.TranslationRepository
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,11 +39,10 @@ sealed interface TranslationUiState {
     data class Error(val message: String) : TranslationUiState
 }
 
-class TranslationViewModel : ViewModel() {
+class TranslationViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository = TranslationRepository(
-        api = RetrofitClient.geminiApi
-    )
+    private val repository = TranslationRepository()
+    private val preferencesManager = PreferencesManager(application)
 
     private val _uiState = MutableStateFlow<TranslationUiState>(TranslationUiState.Idle)
     val uiState: StateFlow<TranslationUiState> = _uiState.asStateFlow()
@@ -51,21 +53,68 @@ class TranslationViewModel : ViewModel() {
     private val _targetLanguage = MutableStateFlow("우즈베크어")
     val targetLanguage: StateFlow<String> = _targetLanguage.asStateFlow()
 
+    private val _autoTranslateDelay = MutableStateFlow(preferencesManager.autoTranslateDelay)
+    val autoTranslateDelay: StateFlow<Int> = _autoTranslateDelay.asStateFlow()
+
+    /** 카운트다운 중 남은 초, null이면 카운트다운 비활성 */
+    private val _remainingSeconds = MutableStateFlow<Int?>(null)
+    val remainingSeconds: StateFlow<Int?> = _remainingSeconds.asStateFlow()
+
+    private var autoTranslateJob: Job? = null
+
     fun updateSourceText(text: String) {
         _sourceText.value = text
+        val state = _uiState.value
+        if (text.isNotBlank() && (state is TranslationUiState.Idle || state is TranslationUiState.Error || state is TranslationUiState.Editing)) {
+            scheduleAutoTranslate()
+        } else {
+            cancelAutoTranslate()
+        }
     }
 
     fun updateTargetLanguage(language: String) {
         _targetLanguage.value = language
     }
 
+    fun updateAutoTranslateDelay(seconds: Int) {
+        val clamped = seconds.coerceIn(
+            PreferencesManager.MIN_DELAY,
+            PreferencesManager.MAX_DELAY
+        )
+        _autoTranslateDelay.value = clamped
+        preferencesManager.autoTranslateDelay = clamped
+        // 타이머 진행 중이면 새 설정으로 재스케줄
+        if (autoTranslateJob?.isActive == true) {
+            scheduleAutoTranslate()
+        }
+    }
+
+    private fun scheduleAutoTranslate() {
+        autoTranslateJob?.cancel()
+        autoTranslateJob = viewModelScope.launch {
+            for (i in _autoTranslateDelay.value downTo 1) {
+                _remainingSeconds.value = i
+                delay(1000L)
+            }
+            _remainingSeconds.value = null
+            translateToEnglish()
+        }
+    }
+
+    private fun cancelAutoTranslate() {
+        autoTranslateJob?.cancel()
+        autoTranslateJob = null
+        _remainingSeconds.value = null
+    }
+
     /**
-     * 1단계: 원문 → 영어 직역
+     * 1단계: 원문 → 영어 직역 (DeepL)
      * 완료 후 Editing 상태로 전환하여 사용자가 영어를 수정할 수 있게 한다.
      */
     fun translateToEnglish() {
         val text = _sourceText.value
         if (text.isBlank()) return
+        cancelAutoTranslate()
 
         viewModelScope.launch {
             _uiState.value = TranslationUiState.Loading
@@ -83,7 +132,7 @@ class TranslationViewModel : ViewModel() {
     }
 
     /**
-     * 2단계: 사용자가 수정한 영어 → 최종 언어 번역
+     * 2단계: 사용자가 수정한 영어 → 최종 언어 번역 (구글 번역)
      *
      * @param editedEnglish 사용자가 확인/수정한 영어 텍스트
      */
@@ -113,6 +162,7 @@ class TranslationViewModel : ViewModel() {
 
     /** 상태를 Idle로 초기화 */
     fun resetState() {
+        cancelAutoTranslate()
         _uiState.value = TranslationUiState.Idle
     }
 }
