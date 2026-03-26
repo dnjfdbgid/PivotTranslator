@@ -76,6 +76,7 @@ fun TranslationScreen(
         targetLanguage = targetLanguage,
         autoTranslateDelay = autoTranslateDelay,
         remainingSeconds = remainingSeconds,
+        isExpired = viewModel.isExpired,
         onSourceTextChange = viewModel::updateSourceText,
         onLanguageSelected = viewModel::updateTargetLanguage,
         onTranslateToTarget = viewModel::translateToTarget,
@@ -92,6 +93,7 @@ private fun TranslationScreenContent(
     targetLanguage: String,
     autoTranslateDelay: Int,
     remainingSeconds: Int?,
+    isExpired: Boolean,
     onSourceTextChange: (String) -> Unit,
     onLanguageSelected: (String) -> Unit,
     onTranslateToTarget: (String) -> Unit,
@@ -130,6 +132,24 @@ private fun TranslationScreenContent(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
+            // ── 만료 안내 ──
+            if (isExpired) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "번역 기능의 사용 기간이 만료되었습니다.",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             // ── 원문 입력 ──
             OutlinedTextField(
                 value = sourceText,
@@ -139,11 +159,11 @@ private fun TranslationScreenContent(
                     .fillMaxWidth()
                     .height(150.dp),
                 maxLines = 10,
-                enabled = uiState is TranslationUiState.Idle || uiState is TranslationUiState.Error || uiState is TranslationUiState.Editing
+                enabled = !isExpired && (uiState is TranslationUiState.Idle || uiState is TranslationUiState.Error || uiState is TranslationUiState.Editing)
             )
 
             // ── 자동 번역 안내 + 대기 시간 설정 ──
-            if (uiState is TranslationUiState.Idle || uiState is TranslationUiState.Error || uiState is TranslationUiState.Editing) {
+            if (!isExpired && (uiState is TranslationUiState.Idle || uiState is TranslationUiState.Error || uiState is TranslationUiState.Editing)) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 DelayStepper(
@@ -488,6 +508,7 @@ private fun TranslationScreenPreview() {
             targetLanguage = "우즈베크어",
             autoTranslateDelay = 6,
             remainingSeconds = null,
+            isExpired = false,
             onSourceTextChange = {},
             onLanguageSelected = {},
             onTranslateToTarget = {},

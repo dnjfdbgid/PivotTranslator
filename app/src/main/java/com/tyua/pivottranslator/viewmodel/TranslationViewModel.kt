@@ -3,6 +3,7 @@ package com.tyua.pivottranslator.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.tyua.pivottranslator.config.AppConfig
 import com.tyua.pivottranslator.preferences.PreferencesManager
 import com.tyua.pivottranslator.repository.TranslationRepository
 import kotlinx.coroutines.Job
@@ -12,6 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.net.UnknownHostException
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 /**
  * 번역 화면의 UI 상태
@@ -60,10 +63,20 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
     private val _remainingSeconds = MutableStateFlow<Int?>(null)
     val remainingSeconds: StateFlow<Int?> = _remainingSeconds.asStateFlow()
 
+    /** 번역 기능 만료 여부 */
+    val isExpired: Boolean = run {
+        val expiration = LocalDate.parse(
+            AppConfig.EXPIRATION_DATE,
+            DateTimeFormatter.ofPattern("yyyyMMdd")
+        )
+        LocalDate.now().isAfter(expiration)
+    }
+
     private var autoTranslateJob: Job? = null
 
     fun updateSourceText(text: String) {
         _sourceText.value = text
+        if (isExpired) return
         val state = _uiState.value
         if (text.isNotBlank() && (state is TranslationUiState.Idle || state is TranslationUiState.Error || state is TranslationUiState.Editing)) {
             scheduleAutoTranslate()
@@ -113,7 +126,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
      */
     fun translateToEnglish() {
         val text = _sourceText.value
-        if (text.isBlank()) return
+        if (text.isBlank() || isExpired) return
         cancelAutoTranslate()
 
         viewModelScope.launch {
@@ -137,7 +150,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
      * @param editedEnglish 사용자가 확인/수정한 영어 텍스트
      */
     fun translateToTarget(editedEnglish: String) {
-        if (editedEnglish.isBlank()) return
+        if (editedEnglish.isBlank() || isExpired) return
 
         viewModelScope.launch {
             _uiState.value = TranslationUiState.Loading

@@ -44,6 +44,7 @@ Single-module app using **MVVM** with Jetpack Compose. No DI framework — depen
 - **Repository** (`repository/TranslationRepository`): 1단계(→ 영어)와 2단계(→ 최종 언어) 번역을 Translator에 위임.
 - **ViewModel** (`viewmodel/TranslationViewModel`): `AndroidViewModel` 기반. sealed `TranslationUiState` (Idle → Loading → Editing → Loading → Success / Error) 관리. 자동 번역 디바운스 타이머 및 카운트다운 기능 포함.
 - **Preferences** (`preferences/PreferencesManager`): `SharedPreferences`로 자동 번역 대기 시간(4~10초, 기본 6초)을 영속 저장.
+- **Config** (`config/AppConfig`): 앱 설정 상수. `EXPIRATION_DATE`(yyyyMMdd)로 번역 기능 만료일을 하드코딩. 만료일 이후 번역 기능이 비활성화된다.
 - **UI** (`ui/screen/TranslationScreen`): Single screen with state-driven rendering. `TranslationScreenContent`로 상태/콜백 분리하여 `@Preview` 지원. Navigation은 `NavGraph`를 통해 설정되어 있으며 현재 하나의 route(`"translation"`)만 사용.
 
 ## Key Features
@@ -53,6 +54,7 @@ Single-module app using **MVVM** with Jetpack Compose. No DI framework — depen
 - **대기 시간 설정**: +/- 버튼으로 4~10초 범위에서 조절 가능, 앱 재시작 후에도 유지
 - **Editing 상태 원문 수정**: 영어 번역 결과 확인 중에도 원문을 수정하면 자동 재번역
 - **자동 클립보드 복사**: 최종 번역 결과가 나오면 자동으로 클립보드에 복사 + 스낵바 알림
+- **번역 기능 만료**: `AppConfig.EXPIRATION_DATE`에 설정된 날짜 이후 번역 기능 비활성화, 만료 안내 표시
 
 ## Key Details
 
