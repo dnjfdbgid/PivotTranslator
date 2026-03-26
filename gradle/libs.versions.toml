@@ -7,7 +7,7 @@ espressoCore = "3.5.1"
 lifecycleRuntimeKtx = "2.6.1"
 activityCompose = "1.8.0"
 kotlin = "2.2.10"
-composeBom = "2024.09.00"
+composeBom = "2026.03.00"
 # -- 추가 라이브러리 버전 --
 retrofit = "2.11.0"
 okhttp = "4.12.0"
