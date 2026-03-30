@@ -213,7 +213,7 @@ sequenceDiagram
     VM->>VM: uiState = Loading
     VM->>Repo: translateToTarget(english, targetLanguage)
     Repo->>GT: translate(english, targetLanguage)
-    GT->>API: GET /translate_a/single?sl=en&tl=uz&q=english
+    GT->>API: GET /translate_a/single?sl=auto&tl=uz&q=english
     API-->>GT: JsonArray 응답
     GT-->>Repo: 최종 번역 텍스트
     Repo-->>VM: finalTranslation
