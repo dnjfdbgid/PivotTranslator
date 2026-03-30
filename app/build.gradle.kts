@@ -1,3 +1,5 @@
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.Properties
 
 plugins {
@@ -95,4 +97,18 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     implementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+// 릴리즈 APK 파일명: PivotTranslator_release_yyyyMMdd.apk
+afterEvaluate {
+    tasks.findByName("assembleRelease")?.let { assembleTask ->
+        tasks.register<Copy>("copyReleaseApk") {
+            val date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+            from(layout.buildDirectory.dir("outputs/apk/release"))
+            include("app-release.apk")
+            into(rootProject.layout.buildDirectory.dir("release"))
+            rename { "PivotTranslator_release_$date.apk" }
+        }
+        assembleTask.finalizedBy("copyReleaseApk")
+    }
 }
