@@ -9,5 +9,5 @@ package com.tyua.pivottranslator.config
 object AppConfig {
 
     /** 번역 기능 만료일 (yyyyMMdd 형식) */
-    const val EXPIRATION_DATE = "20000101"
+    const val EXPIRATION_DATE = "20260930"
 }
