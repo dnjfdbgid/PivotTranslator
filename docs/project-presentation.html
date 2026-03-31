@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PivotTranslator 프로젝트 발표</title>
+    
+<style>
+    body { font-family: "Segoe UI", -apple-system, sans-serif; max-width: 960px; margin: 0 auto; padding: 20px 40px; background: #fafafa; color: #333; line-height: 1.7; }
+    h1 { color: #1565c0; border-bottom: 3px solid #1565c0; padding-bottom: 10px; }
+    h2 { color: #333; margin-top: 40px; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
+    h3 { color: #555; margin-top: 28px; }
+    table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    th, td { border: 1px solid #ddd; padding: 10px 14px; text-align: left; }
+    th { background: #f5f5f5; font-weight: 600; }
+    tr:nth-child(even) { background: #fafafa; }
+    code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+    pre { background: #2d2d2d; color: #f8f8f2; padding: 16px 20px; border-radius: 6px; overflow-x: auto; line-height: 1.5; }
+    pre code { background: none; padding: 0; color: inherit; }
+    blockquote { border-left: 4px solid #1565c0; margin: 16px 0; padding: 8px 16px; background: #e3f2fd; color: #0d47a1; }
+    hr { border: none; border-top: 1px solid #ddd; margin: 32px 0; }
+    ul, ol { padding-left: 24px; }
+    li { margin: 4px 0; }
+    strong { color: #1a1a1a; }
+</style>
+
+</head>
+<body>
+<h1>PivotTranslator 프로젝트 발표</h1>
+<h2>1. 프로젝트 소개</h2>
+<h3>앱 이름</h3>
+<p><strong>Pivot Translator</strong></p>
+<h3>개발 배경</h3>
+<ul>
+<li>한국어 → 우즈베크어처럼 학습 데이터가 적은 언어 쌍은 직접 번역 시 품질이 낮음</li>
+<li>영어를 중간 언어(피벗)로 활용하면 각 구간의 번역 품질이 높아짐</li>
+<li>기존 번역기는 중간 결과를 확인/수정할 수 없음</li>
+</ul>
+<h3>핵심 아이디어</h3>
+<blockquote>
+<p>사용자가 영어 번역 결과를 직접 검토하고 수정한 뒤 최종 번역을 진행한다.</p>
+</blockquote>
+<h3>번역 흐름</h3>
+<pre><code>원문 입력
+  ↓ (자동, 카운트다운 후)
+영어 번역 결과 표시
+  ↓ (사용자가 영어를 검토/수정)
+대상 언어로 최종 번역
+  ↓ (자동 클립보드 복사)
+결과 확인
+</code></pre>
+<hr />
+<h2>2. 주요 기능</h2>
+<table>
+<thead>
+<tr>
+<th>기능</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>피벗 번역</td>
+<td>원문 → 영어 → 대상 언어 2단계 번역</td>
+</tr>
+<tr>
+<td>영어 편집</td>
+<td>1차 영어 번역 결과를 사용자가 직접 수정 가능</td>
+</tr>
+<tr>
+<td>자동 번역</td>
+<td>텍스트 입력 후 N초 대기 → 자동으로 영어 번역 시작</td>
+</tr>
+<tr>
+<td>카운트다운 표시</td>
+<td>자동 번역까지 남은 시간을 실시간 표시</td>
+</tr>
+<tr>
+<td>대기 시간 설정</td>
+<td>4~10초 범위에서 조절 가능, 앱 재시작 후에도 유지</td>
+</tr>
+<tr>
+<td>클립보드 자동 복사</td>
+<td>최종 번역 결과 자동 복사 + 스낵바 알림</td>
+</tr>
+<tr>
+<td>번역 기능 만료</td>
+<td>설정된 날짜 이후 번역 기능 비활성화</td>
+</tr>
+</tbody>
+</table>
+<h3>지원 언어 (16개)</h3>
+<p>우즈베크어(기본), 한국어, 일본어, 중국어, 스페인어, 프랑스어, 독일어, 포르투갈어, 이탈리아어, 러시아어, 아랍어, 힌디어, 태국어, 베트남어, 인도네시아어, 터키어</p>
+<hr />
+<h2>3. 기술 스택</h2>
+<table>
+<thead>
+<tr>
+<th>분류</th>
+<th>기술</th>
+<th>버전</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>언어</td>
+<td>Kotlin</td>
+<td>2.2.10</td>
+</tr>
+<tr>
+<td>UI</td>
+<td>Jetpack Compose + Material3</td>
+<td>BOM 2026.03.00</td>
+</tr>
+<tr>
+<td>아키텍처</td>
+<td>MVVM (ViewModel + StateFlow)</td>
+<td>-</td>
+</tr>
+<tr>
+<td>네트워크</td>
+<td>Retrofit2 + OkHttp</td>
+<td>2.11.0 / 4.12.0</td>
+</tr>
+<tr>
+<td>직렬화</td>
+<td>Gson</td>
+<td>2.11.0</td>
+</tr>
+<tr>
+<td>비동기</td>
+<td>Kotlin Coroutines</td>
+<td>1.9.0</td>
+</tr>
+<tr>
+<td>네비게이션</td>
+<td>Navigation Compose</td>
+<td>2.8.9</td>
+</tr>
+<tr>
+<td>영속 저장</td>
+<td>SharedPreferences</td>
+<td>-</td>
+</tr>
+<tr>
+<td>빌드</td>
+<td>Gradle (Kotlin DSL) + AGP</td>
+<td>9.1.0</td>
+</tr>
+<tr>
+<td>SDK</td>
+<td>Target 36 / Min 26</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h3>기술 선택 근거</h3>
+<ul>
+<li><strong>DI 프레임워크 미사용</strong>: 15개 파일, 1,188줄 규모 — 의존성 그래프가 단순하여 Hilt/Koin 도입 시 오버엔지니어링</li>
+<li><strong>API 키 불필요</strong>: Google Translate 무료 웹 엔드포인트 사용</li>
+<li><strong>Gson 선택</strong>: Retrofit과의 통합이 간편하고, Google Translate 응답이 비정형 JsonArray라 유연한 파싱 필요</li>
+</ul>
+<hr />
+<h2>4. 아키텍처</h2>
+<blockquote>
+<p>상세 다이어그램은 <code>docs/diagrams.md</code> 또는 <code>docs/diagrams-offline.html</code> 참조</p>
+</blockquote>
+<h3>계층 구조</h3>
+<pre><code>UI Layer        TranslationScreen → TranslationScreenContent → 하위 컴포넌트
+                (상태 수집 + 콜백 바인딩)   (순수 Composable, Preview 지원)
+
+ViewModel       TranslationViewModel + TranslationUiState (5가지 상태)
+                (상태 관리, 자동 번역 타이머, 만료일 확인)
+
+Data Layer      TranslationRepository    PreferencesManager    AppConfig
+                (번역 서비스 위임)        (대기 시간 저장)      (만료일 상수)
+
+Network         GoogleTranslator         DeepLTranslator(비활성)
+                (언어 코드 매핑 + 응답 파싱)
+
+Infrastructure  RetrofitClient (OkHttpClient 공유, API 인스턴스 제공)
+
+External        Google Translate API (translate.googleapis.com)
+</code></pre>
+<h3>UI 상태 흐름</h3>
+<pre><code>앱 시작 → 만료일 확인 → Idle (입력 대기)
+
+Idle → (카운트다운 완료) → Loading(1단계) → Editing (영어 검토/수정)
+                                              ↓ 번역 버튼
+                                         Loading(2단계) → Success → Idle
+</code></pre>
+<h3>주요 설계 포인트</h3>
+<ul>
+<li><strong>sealed interface</strong>: 5가지 UI 상태를 타입으로 표현, 컴파일 타임에 모든 상태 처리 보장</li>
+<li><strong>Presenter 패턴</strong>: Screen(상태 수집) / ScreenContent(순수 렌더링) 분리로 Preview 지원</li>
+<li><strong>Repository 추상화</strong>: 번역 서비스 교체 지점을 한 곳으로 집중 (DeepL ↔ Google 전환이 주석 한 줄)</li>
+<li><strong>코루틴 디바운스</strong>: 입력마다 기존 타이머 취소 후 재시작, viewModelScope로 생명주기 관리</li>
+</ul>
+<hr />
+<h2>5. 데모 시나리오</h2>
+<h3>정상 플로우</h3>
+<ol>
+<li>앱 실행 → 원문 입력 (예: "안녕하세요, 만나서 반갑습니다")</li>
+<li>카운트다운 표시 (6초 → 5초 → ... → 0초)</li>
+<li>영어 번역 결과 표시 (예: "Hello, nice to meet you")</li>
+<li>필요 시 영어 텍스트 수정</li>
+<li>대상 언어 선택 (우즈베크어) → 번역 버튼 클릭</li>
+<li>최종 결과 표시 + 클립보드 자동 복사</li>
+</ol>
+<h3>원문 수정 플로우</h3>
+<ol>
+<li>영어 결과 확인 후 원문이 마음에 안 들면 원문 수정</li>
+<li>카운트다운 재시작 → 1단계부터 재번역</li>
+</ol>
+<h3>대기 시간 변경</h3>
+<ol>
+<li>+/- 버튼으로 4~10초 범위 조절</li>
+<li>앱 종료 후 재시작해도 설정 유지</li>
+</ol>
+<hr />
+<h2>6. 보안</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>조치</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>키스토어</td>
+<td><code>keystore/</code>, <code>*.jks</code> → <code>.gitignore</code> 적용</td>
+</tr>
+<tr>
+<td>크레덴셜</td>
+<td><code>local.properties</code>에 저장, Git 미추적</td>
+</tr>
+<tr>
+<td>난독화</td>
+<td>ProGuard/R8 규칙 적용 (Retrofit, OkHttp, Gson, Coroutines, DeepL DTO)</td>
+</tr>
+<tr>
+<td>API 키</td>
+<td>없음 — 무료 웹 엔드포인트만 사용</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>7. 알려진 제약 사항</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>현재 상태</th>
+<th>영향</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DeepL API</td>
+<td>HTTP 429로 비활성</td>
+<td>1단계도 Google Translate 사용 중</td>
+</tr>
+<tr>
+<td>무료 엔드포인트</td>
+<td>API 키 없는 비공식 엔드포인트</td>
+<td>트래픽 제한/차단 가능성</td>
+</tr>
+<tr>
+<td>만료일</td>
+<td>앱 내 상수로 하드코딩</td>
+<td>만료 시 앱 업데이트 배포 필요</td>
+</tr>
+<tr>
+<td>에러 복구</td>
+<td>2단계 에러 시 1단계부터 재시작</td>
+<td>사용자가 수정한 영어 텍스트를 잃을 수 있음</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>8. 향후 계획</h2>
+<ul>
+<li>DeepL 유료 API 또는 대안 서비스 도입 검토</li>
+<li>만료일 서버 기반 관리로 전환</li>
+<li>2단계 에러 시 영어 편집 상태 보존 후 재시도</li>
+<li>번역 히스토리 저장 기능</li>
+<li>오프라인 캐시 지원</li>
+</ul>
+<hr />
+<h2>9. 프로젝트 규모</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>수치</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>소스 파일</td>
+<td>15개 (.kt)</td>
+</tr>
+<tr>
+<td>총 코드 라인</td>
+<td>1,188줄</td>
+</tr>
+<tr>
+<td>개발 기간</td>
+<td>2026.03.24 ~ 현재</td>
+</tr>
+<tr>
+<td>지원 언어</td>
+<td>16개</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>참고 자료</h2>
+<ul>
+<li>아키텍처/데이터 플로우/시퀀스 다이어그램: <code>docs/diagrams.md</code></li>
+<li>다이어그램 (오프라인 브라우저): <code>docs/diagrams-offline.html</code></li>
+<li>코드 리뷰 상세: <code>docs/project-review.md</code></li>
+</ul>
+</body>
+</html>
