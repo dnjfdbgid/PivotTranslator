@@ -79,7 +79,7 @@ private val supportedLanguages = listOf(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TranslationScreen(
-    viewModel: TranslationViewModel = viewModel()
+    viewModel: TranslationViewModel = viewModel(factory = TranslationViewModel.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val sourceText by viewModel.sourceText.collectAsState()
@@ -187,6 +187,7 @@ private fun TranslationScreenContent(
                 }
 
                 val isActive = activationState is AppActivationState.Active
+                val isInputEnabled = isActive && (uiState is TranslationUiState.Idle || uiState is TranslationUiState.Error || uiState is TranslationUiState.Editing)
 
                 // ── 원문 입력 ──
                 OutlinedTextField(
@@ -198,11 +199,11 @@ private fun TranslationScreenContent(
                         .height(150.dp),
                     maxLines = 10,
                     shape = RoundedCornerShape(12.dp),
-                    enabled = isActive && (uiState is TranslationUiState.Idle || uiState is TranslationUiState.Error || uiState is TranslationUiState.Editing)
+                    enabled = isInputEnabled
                 )
 
                 // ── 자동 번역 대기 시간 설정 ──
-                if (isActive && (uiState is TranslationUiState.Idle || uiState is TranslationUiState.Error || uiState is TranslationUiState.Editing)) {
+                if (isInputEnabled) {
                     Spacer(modifier = Modifier.height(12.dp))
                     DelayStepper(
                         delay = autoTranslateDelay,

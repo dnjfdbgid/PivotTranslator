@@ -3,6 +3,7 @@ package com.tyua.pivottranslator.repository
 import com.tyua.pivottranslator.BuildConfig
 import com.tyua.pivottranslator.network.DeepLTranslateRequest
 import com.tyua.pivottranslator.network.GoogleTranslateRequest
+import com.tyua.pivottranslator.network.PivotGateApi
 import com.tyua.pivottranslator.network.RetrofitClient
 
 /**
@@ -10,9 +11,9 @@ import com.tyua.pivottranslator.network.RetrofitClient
  *
  * 흐름: 원문 → 영어 직역 (PivotGate DeepL) → 사용자 수정 → 최종 언어 번역 (PivotGate Google)
  */
-class TranslationRepository {
-
-    private val pivotGateApi = RetrofitClient.pivotGateApi
+open class TranslationRepository(
+    private val pivotGateApi: PivotGateApi = RetrofitClient.pivotGateApi
+) {
 
     /** 한글 언어명 → 언어 코드 매핑 (PivotGate Google 번역 요청용) */
     private val languageCodes = mapOf(
@@ -38,7 +39,7 @@ class TranslationRepository {
     /**
      * 1단계: 원문 → 영어 직역 (PivotGate DeepL API)
      */
-    suspend fun translateToEnglish(sourceText: String): String {
+    open suspend fun translateToEnglish(sourceText: String): String {
         val response = pivotGateApi.translateDeepL(
             apiKey = BuildConfig.PIVOT_GATE_API_KEY,
             request = DeepLTranslateRequest(text = sourceText)
@@ -55,7 +56,7 @@ class TranslationRepository {
     /**
      * 2단계: 사용자가 수정한 영어 → 최종 언어 번역 (PivotGate Google API)
      */
-    suspend fun translateToTarget(englishText: String, targetLanguage: String): String {
+    open suspend fun translateToTarget(englishText: String, targetLanguage: String): String {
         val targetCode = languageCodes[targetLanguage]
             ?: throw IllegalArgumentException("지원하지 않는 언어입니다: $targetLanguage")
 

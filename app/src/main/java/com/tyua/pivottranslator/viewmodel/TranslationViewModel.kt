@@ -3,6 +3,7 @@ package com.tyua.pivottranslator.viewmodel
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.tyua.pivottranslator.BuildConfig
 import com.tyua.pivottranslator.config.AppConfig
@@ -67,14 +68,33 @@ sealed interface AppActivationState {
     /** 만료됨 */
     data object Expired : AppActivationState
 
-    /** 서버 접속 실패 */
-    data class ServerError(val message: String) : AppActivationState
+    /** 서버 접속 실패 — previousUiState: 에러 발생 전 UI 상태 (재연결 시 복원용) */
+    data class ServerError(
+        val message: String,
+        val previousUiState: TranslationUiState? = null
+    ) : AppActivationState
 }
 
-class TranslationViewModel(application: Application) : AndroidViewModel(application) {
+class TranslationViewModel(
+    application: Application,
+    private val repository: TranslationRepository = TranslationRepository()
+) : AndroidViewModel(application) {
 
-    private val repository = TranslationRepository()
     private val preferencesManager = PreferencesManager(application)
+
+    companion object {
+        /** 기본 Factory — 테스트 시 Repository를 주입할 수 있도록 별도 Factory 제공 */
+        val Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : androidx.lifecycle.ViewModel> create(
+                modelClass: Class<T>,
+                extras: androidx.lifecycle.viewmodel.CreationExtras
+            ): T {
+                val application = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]!!
+                return TranslationViewModel(application) as T
+            }
+        }
+    }
 
     private val _uiState = MutableStateFlow<TranslationUiState>(TranslationUiState.Idle)
     val uiState: StateFlow<TranslationUiState> = _uiState.asStateFlow()
@@ -106,9 +126,6 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
 
     private var autoTranslateJob: Job? = null
 
-    /** 서버 에러 전환 전 UI 상태 저장 (재연결 시 복원용) */
-    private var savedUiState: TranslationUiState? = null
-
     init {
         fetchExpirationFromServer()
     }
@@ -121,7 +138,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
      * PivotGate 서버에서 만료일을 조회하여 앱 활성화 상태를 결정한다.
      * 서버 연결 실패 시 앱 사용을 차단한다.
      */
-    private fun fetchExpirationFromServer(restoreState: Boolean = false) {
+    private fun fetchExpirationFromServer(previousUiState: TranslationUiState? = null) {
         viewModelScope.launch {
             try {
                 // TCP 소켓으로 서버 접속 가능 여부를 먼저 확인 (ECONNREFUSED 즉시 감지)
@@ -139,10 +156,9 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
                 } else {
                     AppActivationState.Active
                 }
-                // 재연결 시 이전 UI 상태 복원
-                if (restoreState && savedUiState != null) {
-                    _uiState.value = savedUiState!!
-                    savedUiState = null
+                // 재연결 성공 시 이전 UI 상태 복원
+                if (previousUiState != null) {
+                    _uiState.value = previousUiState
                 }
                 Log.d("TranslationViewModel", "서버 만료일 적용: ${response.expirationDate}")
             } catch (e: UnknownHostException) {
@@ -180,17 +196,17 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
 
     /** 서버 재접속 시도 — 성공 시 이전 UI 상태 복원 */
     fun retryServerConnection() {
+        val previousUiState = (_activationState.value as? AppActivationState.ServerError)?.previousUiState
         _activationState.value = AppActivationState.Checking
-        fetchExpirationFromServer(restoreState = true)
+        fetchExpirationFromServer(previousUiState)
     }
 
     /**
      * 번역 중 서버 연결 에러 발생 시 호출.
-     * 현재 UI 상태를 저장하고 서버 에러 화면으로 전환한다.
+     * 이전 UI 상태를 ServerError에 포함하여 재연결 시 복원할 수 있게 한다.
      */
-    private fun switchToServerError(currentUiState: TranslationUiState, message: String) {
-        savedUiState = currentUiState
-        _activationState.value = AppActivationState.ServerError(message)
+    private fun switchToServerError(previousUiState: TranslationUiState, message: String) {
+        _activationState.value = AppActivationState.ServerError(message, previousUiState)
     }
 
     fun updateSourceText(text: String) {
