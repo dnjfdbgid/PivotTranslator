@@ -1,5 +1,6 @@
 package com.tyua.pivottranslator.network
 
+import com.tyua.pivottranslator.BuildConfig
 import com.tyua.pivottranslator.config.AppConfig
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -25,11 +26,15 @@ object RetrofitClient {
                     .build()
                 chain.proceed(request)
             }
-            .addInterceptor(
-                HttpLoggingInterceptor().apply {
-                    level = HttpLoggingInterceptor.Level.BODY
+            .apply {
+                if (BuildConfig.DEBUG) {
+                    addInterceptor(
+                        HttpLoggingInterceptor().apply {
+                            level = HttpLoggingInterceptor.Level.BODY
+                        }
+                    )
                 }
-            )
+            }
             .build()
     }
 
