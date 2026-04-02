@@ -10,7 +10,7 @@ PivotTranslator is an Android app that performs **pivot translation** — transl
 
 The user manually edits the English pivot text between steps, giving them control over translation quality. The UI is in Korean.
 
-> **Note:** 번역 요청은 자체 PivotGate 백엔드 서버(`http://10.0.2.2:8000/`)를 경유한다. 1단계는 DeepL, 2단계는 Google Translate를 사용하며, 서버가 API 호출을 대행한다. 기존 직접 호출 코드(`GoogleTranslator`, `DeepLTranslator`)는 폴백용으로 유지되어 있음.
+> **Note:** 번역 요청은 자체 PivotGate 백엔드 서버를 경유한다. Base URL은 `AppConfig.PIVOT_GATE_BASE_URL`에 정의. 1단계는 DeepL, 2단계는 Google Translate를 사용하며, 서버가 API 호출을 대행한다. 기존 직접 호출 코드(`GoogleTranslator`, `DeepLTranslator`)는 폴백용으로 유지되어 있음.
 
 ## Build & Run
 
@@ -33,22 +33,22 @@ The user manually edits the English pivot text between steps, giving them contro
 
 ## Architecture
 
-Single-module app using **MVVM** with Jetpack Compose. No DI framework — dependencies are wired manually.
+Single-module app using **MVVM** with Jetpack Compose. DI 프레임워크 없이 생성자 주입 기반으로 의존성을 연결한다.
 
 **Data flow:** `TranslationScreen` → `TranslationViewModel` → `TranslationRepository` → `PivotGateApi` (Retrofit)
 
 - **Network layer** (`network/`): Retrofit singleton (`RetrofitClient`)이 PivotGate, Google Translate, DeepL 세 서비스의 API 인스턴스를 제공. 공통 `OkHttpClient`를 공유한다.
-  - `PivotGateApi` — 자체 PivotGate 서버 (`http://10.0.2.2:8000/`) 경유 번역 및 만료일 조회. `X-API-Key` 헤더로 인증.
+  - `PivotGateApi` — 자체 PivotGate 서버 (`AppConfig.PIVOT_GATE_BASE_URL`) 경유 번역 및 만료일 조회. `X-API-Key` 헤더로 인증.
     - `GET /api/v1/app/expiration` — 앱 만료일 조회
     - `POST /api/v1/translate/deepl` — DeepL 번역 위임
     - `POST /api/v1/translate/google` — Google 번역 위임
   - `GoogleTranslateApi` — `translate.googleapis.com` 무료 웹 엔드포인트 (`@GET`) — 폴백용
   - `DeepLApi` — `www2.deepl.com/jsonrpc` JSON-RPC 엔드포인트 (`@POST`) — 폴백용
 - **Translator layer** (`translator/`): `GoogleTranslator`, `DeepLTranslator` — 각 번역 서비스의 언어 코드 매핑 및 응답 파싱 담당. 현재는 미사용(폴백용 유지).
-- **Repository** (`repository/TranslationRepository`): `PivotGateApi`를 통해 1단계(DeepL → 영어)와 2단계(Google → 최종 언어) 번역을 수행. `BuildConfig.PIVOT_GATE_API_KEY`로 인증.
-- **ViewModel** (`viewmodel/TranslationViewModel`): `AndroidViewModel` 기반. 두 가지 상태 시스템을 관리:
+- **Repository** (`repository/TranslationRepository`): 생성자로 `PivotGateApi`를 주입받아 1단계(DeepL → 영어)와 2단계(Google → 최종 언어) 번역을 수행. `BuildConfig.PIVOT_GATE_API_KEY`로 인증.
+- **ViewModel** (`viewmodel/TranslationViewModel`): `AndroidViewModel` 기반. 생성자로 `TranslationRepository`를 주입받으며, `ViewModelProvider.Factory`를 companion에 제공. 두 가지 상태 시스템을 관리:
   - `TranslationUiState` (Idle → Loading → Editing → Loading → Success / Error) — 번역 흐름
-  - `AppActivationState` (Checking → Active / Expired / ServerError) — 앱 활성화 상태
+  - `AppActivationState` (Checking → Active / Expired / ServerError) — 앱 활성화 상태. `ServerError`는 `previousUiState`를 포함하여 재연결 시 이전 UI 상태를 안전하게 복원한다.
   - 앱 시작 시 서버에서 만료일을 조회하고, 서버 연결 실패 시 재시도 기능 제공. 자동 번역 디바운스 타이머 및 카운트다운 기능 포함.
 - **Preferences** (`preferences/PreferencesManager`): `SharedPreferences`로 자동 번역 대기 시간(4~10초, 기본 6초)을 영속 저장.
 - **Config** (`config/AppConfig`): 앱 설정 상수. 각 서비스의 Base URL 정의 (`GOOGLE_TRANSLATE_BASE_URL`, `DEEPL_BASE_URL`, `PIVOT_GATE_BASE_URL`). 만료일은 서버에서 런타임에 조회.
@@ -80,7 +80,8 @@ Single-module app using **MVVM** with Jetpack Compose. No DI framework — depen
 - Version catalog at `gradle/libs.versions.toml`
 - **Material Icons Extended**: `androidx-compose-material-icons-extended` 의존성 사용 (CloudOff, HourglassEmpty, Refresh 등)
 - **PivotGate API Key 필요** — `local.properties`에 `PIVOT_GATE_API_KEY` 설정 필요. `BuildConfig.PIVOT_GATE_API_KEY`로 빌드 시 주입됨
-- **Network Security Config** — `res/xml/network_security_config.xml`에서 에뮬레이터 localhost(`10.0.2.2`) 대상 HTTP 평문 통신 허용
+- **Network Security Config** — `res/xml/network_security_config.xml`에서 PivotGate 서버 도메인 대상 HTTP 평문 통신 허용. 서버 주소 변경 시 함께 업데이트 필요
+- **HTTP 로깅** — `RetrofitClient`의 `HttpLoggingInterceptor`는 DEBUG 빌드에서만 활성화 (`BuildConfig.DEBUG`)
 
 ## Release Build & Keystore Security
 - The release APK is signed using a keystore located in the `keystore/` directory.
@@ -90,3 +91,4 @@ Single-module app using **MVVM** with Jetpack Compose. No DI framework — depen
 ## Coding Guidelines
 - Please write all code comments, explanations, and Git commit messages in **Korean (한국어)**.
 - All user-facing UI texts and error messages should be in Korean.
+- **코드 작성 시 반드시 context7 MCP 도구를 활용**하여 관련 라이브러리(Jetpack Compose, Retrofit, OkHttp, Kotlin Coroutines 등)의 최신 문서와 코드 예제를 참조한 뒤 반영한다.
