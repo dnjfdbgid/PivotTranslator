@@ -15,5 +15,6 @@ object AppConfig {
     const val DEEPL_BASE_URL = "https://www2.deepl.com/"
 
     /** PivotGate API 서버 기본 URL */
-    const val PIVOT_GATE_BASE_URL = "http://10.0.2.2:8000/"
+//    const val PIVOT_GATE_BASE_URL = "http://10.0.2.2:8000/"
+    const val PIVOT_GATE_BASE_URL = "http://192.168.0.118:8000/"
 }

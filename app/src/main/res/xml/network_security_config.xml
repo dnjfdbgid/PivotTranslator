@@ -3,5 +3,6 @@
     <!-- PivotGate 서버 (개발: 에뮬레이터 localhost, 운영: 실제 서버) -->
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">10.0.2.2</domain>
+        <domain includeSubdomains="false">192.168.0.118</domain>
     </domain-config>
 </network-security-config>
