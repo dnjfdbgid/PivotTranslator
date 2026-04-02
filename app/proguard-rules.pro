@@ -27,6 +27,8 @@
 
 # Gson으로 직렬화/역직렬화하는 네트워크 DTO 보존
 -keep class com.tyua.pivottranslator.network.DeepL** { *; }
+-keep class com.tyua.pivottranslator.network.*Request { *; }
+-keep class com.tyua.pivottranslator.network.*Response { *; }
 
 # ── Coroutines ──
 -dontwarn kotlinx.coroutines.**

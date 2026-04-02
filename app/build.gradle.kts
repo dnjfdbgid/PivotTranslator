@@ -39,6 +39,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // local.properties에서 PivotGate API 키 주입
+        buildConfigField(
+            "String",
+            "PIVOT_GATE_API_KEY",
+            "\"${localProperties.getProperty("PIVOT_GATE_API_KEY", "")}\""
+        )
     }
 
     buildTypes {
@@ -58,6 +65,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -70,6 +78,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
 
     // Retrofit2 + OkHttp
     implementation(libs.retrofit.core)

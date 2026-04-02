@@ -3,11 +3,17 @@ package com.tyua.pivottranslator.config
 /**
  * 앱 설정 상수
  *
- * [EXPIRATION_DATE]를 수정하여 번역 기능의 만료일을 설정한다.
- * 만료일이 지나면 번역 기능이 비활성화된다.
+ * 만료일은 PivotGate 서버에서 조회한다.
+ * 서버 접속 실패 시 앱 사용이 차단된다.
  */
 object AppConfig {
 
-    /** 번역 기능 만료일 (yyyyMMdd 형식) */
-    const val EXPIRATION_DATE = "20260930"
+    /** Google Translate 기본 URL */
+    const val GOOGLE_TRANSLATE_BASE_URL = "https://translate.googleapis.com/"
+
+    /** DeepL JSON-RPC 기본 URL */
+    const val DEEPL_BASE_URL = "https://www2.deepl.com/"
+
+    /** PivotGate API 서버 기본 URL */
+    const val PIVOT_GATE_BASE_URL = "http://10.0.2.2:8000/"
 }
