@@ -22,9 +22,6 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.TimerOff
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -130,7 +127,7 @@ private fun TranslationScreenContent(
     LaunchedEffect(uiState) {
         if (uiState is TranslationUiState.Error) {
             snackbarHostState.showSnackbar(
-                message = (uiState as TranslationUiState.Error).message
+                message = uiState.message
             )
         }
     }
