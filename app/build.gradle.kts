@@ -99,6 +99,7 @@ dependencies {
     // Navigation Compose
     implementation(libs.androidx.navigation.compose)
 
+
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)
@@ -110,6 +111,14 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     implementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+// AGP 9 workaround: ART profile compilation generates .dm files that cause
+// INSTALL_BASELINE_PROFILE_FAILED when deploying release builds from Android Studio
+tasks.configureEach {
+    if (name.startsWith("compile") && name.endsWith("ArtProfile")) {
+        enabled = false
+    }
 }
 
 // 릴리즈 APK 파일명: PivotTranslator_release_yyyyMMdd.apk
