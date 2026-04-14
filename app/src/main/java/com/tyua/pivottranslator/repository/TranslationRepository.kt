@@ -33,7 +33,8 @@ open class TranslationRepository(
         "태국어" to "th",
         "베트남어" to "vi",
         "인도네시아어" to "id",
-        "터키어" to "tr"
+        "터키어" to "tr",
+        "말레이어" to "ms"
     )
 
     /**

@@ -323,6 +323,7 @@ class TranslationViewModel(
     /** 상태를 Idle로 초기화 */
     fun resetState() {
         cancelAutoTranslate()
+        _sourceText.value = ""
         _uiState.value = TranslationUiState.Idle
     }
 }

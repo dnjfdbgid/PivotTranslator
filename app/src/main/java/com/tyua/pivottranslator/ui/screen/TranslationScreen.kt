@@ -70,7 +70,7 @@ import com.tyua.pivottranslator.viewmodel.TranslationViewModel
 private val supportedLanguages = listOf(
     "우즈베크어", "한국어", "일본어", "중국어", "스페인어", "프랑스어",
     "독일어", "포르투갈어", "이탈리아어", "러시아어", "아랍어",
-    "힌디어", "태국어", "베트남어", "인도네시아어", "터키어"
+    "힌디어", "태국어", "베트남어", "인도네시아어", "터키어", "말레이어"
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
