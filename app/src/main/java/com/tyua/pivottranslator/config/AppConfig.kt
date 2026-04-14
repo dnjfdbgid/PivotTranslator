@@ -16,5 +16,5 @@ object AppConfig {
 
     /** PivotGate API 서버 기본 URL */
 //    const val PIVOT_GATE_BASE_URL = "http://10.0.2.2:8000/"
-    const val PIVOT_GATE_BASE_URL = "http://210.101.196.94:19000/"
+    const val PIVOT_GATE_BASE_URL = "http://claude.surem.com:19000/"
 }
