@@ -17,3 +17,6 @@ agent-memory-local
 
 # temp files
 tmp/
+
+# Claude session transcripts — may contain secrets echoed from tool results
+projects/
