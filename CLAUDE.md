@@ -18,10 +18,12 @@ Pivot Translator — a two-step translation Android app (Korean → English via 
 
 ```
 app/src/main/java/com/tyua/pivottranslator/
+├── MainActivity.kt  # App entry point (Compose host)
 ├── config/          # API base URLs
 ├── network/         # Retrofit APIs, DTOs, RetrofitClient
 ├── preferences/     # SharedPreferences wrapper
 ├── repository/      # TranslationRepository
+├── translator/      # Direct DeepL/Google translators (backup, unused in current flow)
 ├── ui/
 │   ├── navigation/  # NavGraph (single route)
 │   ├── screen/      # TranslationScreen
