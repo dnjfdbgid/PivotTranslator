@@ -175,3 +175,10 @@ docs/research/*
 docs/session-reports/*
 claude-prime-*.zip
 .mcp.json
+
+# Local backups
+*.bk
+.claude.bk/
+
+# Release APK output directory (app module level)
+app/release/
